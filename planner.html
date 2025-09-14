@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>✨ Aesthetic Website Visual Planner</title>
+  <style>
+    :root {
+      --bg: #e3edf7;
+      --card-bg: rgba(255, 255, 255, 0.65);
+      --border: rgba(255, 255, 255, 0.3);
+      --text: #222;
+      --accent: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #c3dafe, #e0e7ff);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      position: relative;
+      z-index: 10;
+    }
+
+    header h2 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    #controls button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      margin-left: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    #controls button:hover {
+      background: #4f46e5;
+    }
+
+    #board {
+      position: relative;
+      height: calc(100vh - 70px);
+      overflow: auto;
+      padding: 20px;
+    }
+
+    .block {
+      position: absolute;
+      width: 220px;
+      padding: 15px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      cursor: move;
+      user-select: none;
+      backdrop-filter: blur(10px);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .block:hover {
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    textarea, input {
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .block img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    .delete-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      width: 100%;
+      padding: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>✨ Visual Website Planner</h2>
+  <div id="controls">
+    <button onclick="addBlock('text')">Add Text</button>
+    <button onclick="addBlock('image')">Add Image</button>
+    <button onclick="addBlock('chart')">Add Chart</button>
+    <button onclick="saveBlocks()">💾 Save</button>
+    <button onclick="loadBlocks()">🔄 Load</button>
+    <button onclick="clearBlocks()">🗑️ Clear</button>
+  </div>
+</header>
+
+<div id="board"></div>
+
+<script>
+  let board = document.getElementById("board");
+  let zIndex = 1;
+
+  function addBlock(type, content = "", x = 80, y = 80) {
+    const block = document.createElement("div");
+    block.className = "block";
+    block.style.left = x + "px";
+    block.style.top = y + "px";
+    block.style.zIndex = zIndex++;
+
+    let input;
+    if (type === "text") {
+      input = document.createElement("textarea");
+      input.placeholder = "Write your idea...";
+      input.value = content;
+    } else if (type === "image") {
+      input = document.createElement("input");
+      input.placeholder = "Paste image URL...";
+      input.value = content;
+      input.oninput = () => renderImage(block, input.value);
+    } else if (type === "chart") {
+      input = document.createElement("textarea");
+      input.placeholder = "Chart or structure notes...";
+      input.value = content;
+    }
+
+    block.appendChild(input);
+
+    if (type === "image" && content) {
+      renderImage(block, content);
+    }
+
+    const delBtn = document.createElement("button");
+    delBtn.innerText = "Delete";
+    delBtn.className = "delete-btn";
+    delBtn.onclick = () => board.removeChild(block);
+    block.appendChild(delBtn);
+
+    board.appendChild(block);
+    makeDraggable(block);
+  }
+
+  function renderImage(block, url) {
+    let oldImg = block.querySelector("img");
+    if (oldImg) block.removeChild(oldImg);
+
+    if (url) {
+      const img = document.createElement("img");
+      img.src = url;
+      block.insertBefore(img, block.children[1]);
+    }
+  }
+
+  function makeDraggable(el) {
+    let offsetX, offsetY;
+
+    el.onmousedown = function (e) {
+      if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+
+      offsetX = e.clientX - el.offsetLeft;
+      offsetY = e.clientY - el.offsetTop;
+      el.style.zIndex = zIndex++;
+      document.onmousemove = function (e) {
+        el.style.left = e.clientX - offsetX + "px";
+        el.style.top = e.clientY - offsetY + "px";
+      };
+      document.onmouseup = function () {
+        document.onmousemove = null;
+        document.onmouseup = null;
+      };
+    };
+  }
+
+  function saveBlocks() {
+    const blocks = [];
+    document.querySelectorAll(".block").forEach(block => {
+      const input = block.querySelector("textarea, input");
+      const type = input.tagName.toLowerCase() === "textarea"
+        ? (input.placeholder.includes("chart") ? "chart" : "text")
+        : "image";
+      blocks.push({
+        type,
+        content: input.value,
+        x: parseInt(block.style.left),
+        y: parseInt(block.style.top)
+      });
+    });
+    localStorage.setItem("plannerBlocks", JSON.stringify(blocks));
+    alert("✅ Blocks saved to local storage!");
+  }
+
+  function loadBlocks() {
+    const data = localStorage.getItem("plannerBlocks");
+    if (!data) return;
+    clearBlocks(false);
+    const blocks = JSON.parse(data);
+    blocks.forEach(b => addBlock(b.type, b.content, b.x, b.y));
+  }
+
+  function clearBlocks(confirmClear = true) {
+    if (confirmClear && !confirm("⚠️ Clear all blocks?")) return;
+    board.innerHTML = "";
+  }
+
+  // Auto-load saved blocks
+  window.onload = loadBlocks;
+</script>
+
+</body>
+</html>
